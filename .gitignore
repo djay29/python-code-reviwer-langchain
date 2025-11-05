@@ -1,0 +1,7 @@
+*.ipynb
+
+.env
+
+*.txt
+!requirments.txt
+backend/venv
