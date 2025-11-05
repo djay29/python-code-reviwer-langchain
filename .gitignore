@@ -5,3 +5,4 @@
 *.txt
 !requirments.txt
 backend/venv
+*.md
