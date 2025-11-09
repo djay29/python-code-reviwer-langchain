@@ -8,42 +8,26 @@ from typing import TypedDict, Optional, List, Literal
 import json
 from datetime import datetime
 import re
-
+from extensions import AgentState
 load_dotenv(".env")
 
 # Initialize Bedrock client
 bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
 
-
-class AgentState(MessagesState):
-    """Enhanced state to track all analysis results."""
-    code_analysis: Optional[str] = None
-    security_report: Optional[str] = None
-    performance_report: Optional[str] = None
-    best_practices_report: Optional[str] = None
-    complexity_report: Optional[str] = None
-    documentation_report: Optional[str] = None
-    react_specific_report: Optional[str] = None
-    accessibility_report: Optional[str] = None
-    final_documentation: Optional[str] = None
-    user_code: str
-    language: Literal["python", "react"]
-    metadata: Optional[dict] = None
-
-
-# Initialize LLM
 llm = ChatBedrockConverse(
     model="us.amazon.nova-premier-v1:0",
     max_tokens=32000,
-    temperature=0.3
-)
+    temperature=0.3,  # Lower temperature for more consistent analysis
+    bedrock_client=bedrock_client,
+    region_name="us-east-1"
+    )
 
 
 def react_code_analyzer(state: AgentState):
-    """Analyzes React code for best practices and quality."""
-    user_code = state['user_code']
+   """Analyzes React code for best practices and quality."""
+   user_code = state['user_code']
 
-    prompt = f"""You are an expert React/JavaScript/TypeScript code analyst.
+   prompt = f"""You are an expert React/JavaScript/TypeScript code analyst.
 
 Analyze the following React code and provide a detailed report covering:
 
@@ -91,18 +75,18 @@ Provide specific line references and categorize by severity (Critical, High, Med
 
 Format your response with clear sections and severity levels."""
 
-    try:
-        result = llm.invoke(prompt)
-        return {"code_analysis": result.content}
-    except Exception as e:
-        return {"code_analysis": f"Error during code analysis: {str(e)}"}
+   try:
+      result = llm.invoke(prompt)
+      return {"code_analysis": result.content}
+   except Exception as e:
+      return {"code_analysis": f"Error during code analysis: {str(e)}"}
 
 
 def react_specific_analyzer(state: AgentState):
-    """Analyzes React-specific patterns, hooks, and best practices."""
-    user_code = state['user_code']
+   """Analyzes React-specific patterns, hooks, and best practices."""
+   user_code = state['user_code']
 
-    prompt = f"""You are a React expert specializing in React patterns, hooks, and component architecture.
+   prompt = f"""You are a React expert specializing in React patterns, hooks, and component architecture.
 
 Analyze the following React code for React-specific issues:
 
@@ -198,18 +182,18 @@ Format your response as:
 ### Recommendations
 [Priority improvements for React code]"""
 
-    try:
-        result = llm.invoke(prompt)
-        return {"react_specific_report": result.content}
-    except Exception as e:
-        return {"react_specific_report": f"Error during React analysis: {str(e)}"}
+   try:
+      result = llm.invoke(prompt)
+      return {"react_specific_report": result.content}
+   except Exception as e:
+      return {"react_specific_report": f"Error during React analysis: {str(e)}"}
 
 
 def react_security_checker(state: AgentState):
-    """Performs security analysis for React applications."""
-    user_code = state['user_code']
+   """Performs security analysis for React applications."""
+   user_code = state['user_code']
 
-    prompt = f"""You are a web application security expert specializing in React and frontend security.
+   prompt = f"""You are a web application security expert specializing in React and frontend security.
 
 Conduct a thorough security audit of the following React code:
 
@@ -277,18 +261,18 @@ Categorize findings by severity (Critical, High, Medium, Low).
 {user_code}
 ```"""
 
-    try:
-        result = llm.invoke(prompt)
-        return {"security_report": result.content}
-    except Exception as e:
-        return {"security_report": f"Error during security check: {str(e)}"}
+   try:
+      result = llm.invoke(prompt)
+      return {"security_report": result.content}
+   except Exception as e:
+      return {"security_report": f"Error during security check: {str(e)}"}
 
 
 def react_accessibility_checker(state: AgentState):
-    """Checks React code for accessibility (a11y) issues."""
-    user_code = state['user_code']
+   """Checks React code for accessibility (a11y) issues."""
+   user_code = state['user_code']
 
-    prompt = f"""You are a web accessibility (a11y) expert specializing in React applications.
+   prompt = f"""You are a web accessibility (a11y) expert specializing in React applications.
 
 Review the following React code for accessibility issues:
 
@@ -350,9 +334,9 @@ Review the following React code for accessibility issues:
    - Focus on wrong element after actions
 
 10. **React-Specific a11y:**
-    - Missing eslint-plugin-jsx-a11y rules
-    - Ref usage for focus management
-    - Fragment accessibility considerations
+   - Missing eslint-plugin-jsx-a11y rules
+   - Ref usage for focus management
+   - Fragment accessibility considerations
 
 Categorize by WCAG level (A, AA, AAA) and severity.
 
@@ -383,20 +367,18 @@ Format your response as:
 ### Summary & Recommendations
 [Priority improvements]"""
 
-    try:
-        result = llm.invoke(prompt)
-        return {"accessibility_report": result.content}
-    except Exception as e:
-        return {"accessibility_report": f"Error during accessibility check: {str(e)}"}
+   try:
+      result = llm.invoke(prompt)
+      return {"accessibility_report": result.content}
+   except Exception as e:
+      return {"accessibility_report": f"Error during accessibility check: {str(e)}"}
 
 
-def performance_evaluator(state: AgentState):
-    """Evaluates code for performance issues for React)."""
-    user_code = state['user_code']
-    language = state['language']
+def react_performance_evaluator(state: AgentState):
+   """Evaluates code for performance issues for React)."""
+   user_code = state['user_code']
 
-
-    prompt = f"""You are a performance optimization expert for React applications.
+   prompt = f"""You are a performance optimization expert for React applications.
 
 Analyze the following code for performance bottlenecks:
 
@@ -453,23 +435,18 @@ Provide specific recommendations with estimated performance impact.
 {user_code}
 ```"""
 
-    try:
-        result = llm.invoke(prompt)
-        return {"performance_report": result.content}
-    except Exception as e:
-        return {"performance_report": f"Error during performance evaluation: {str(e)}"}
+   try:
+      result = llm.invoke(prompt)
+      return {"performance_report": result.content}
+   except Exception as e:
+      return {"performance_report": f"Error during performance evaluation: {str(e)}"}
 
 
-def best_practices_checker(state: AgentState):
-    """Checks adherence to best practices for react."""
-    user_code = state['user_code']
-    language = state['language']
+def react_best_practices_checker(state: AgentState):
+   """Checks adherence to best practices for react."""
+   user_code = state['user_code']
 
-
-
-
-
-    prompt = f"""You are a React best practices expert and software architect.
+   prompt = f"""You are a React best practices expert and software architect.
 
 Review the code for adherence to best practices:
 
@@ -517,19 +494,19 @@ Review the code for adherence to best practices:
 {user_code}
 ```"""
 
-    try:
-        result = llm.invoke(prompt)
-        return {"best_practices_report": result.content}
-    except Exception as e:
-        return {"best_practices_report": f"Error during best practices check: {str(e)}"}
+   try:
+      result = llm.invoke(prompt)
+      return {"best_practices_report": result.content}
+   except Exception as e:
+      return {"best_practices_report": f"Error during best practices check: {str(e)}"}
 
 
-def complexity_analyzer(state: AgentState):
-    """Analyzes code complexity for react."""
-    user_code = state['user_code']
-    language = state['language']
+def react_complexity_analyzer(state: AgentState):
+   """Analyzes code complexity for react."""
+   user_code = state['user_code']
+   language = state['language']
 
-    prompt = f"""You are a software engineering expert specializing in code maintainability.
+   prompt = f"""You are a software engineering expert specializing in code maintainability.
 
 Analyze the React code complexity and maintainability:
 
@@ -571,23 +548,18 @@ Provide a maintainability score and specific areas that need refactoring.
 {user_code}
 ```"""
 
-    try:
-        result = llm.invoke(prompt)
-        return {"complexity_report": result.content}
-    except Exception as e:
-        return {"complexity_report": f"Error during complexity analysis: {str(e)}"}
+   try:
+      result = llm.invoke(prompt)
+      return {"complexity_report": result.content}
+   except Exception as e:
+      return {"complexity_report": f"Error during complexity analysis: {str(e)}"}
 
 
-def documentation_reviewer(state: AgentState):
-    """Reviews code documentation quality for React."""
-    user_code = state['user_code']
-    language = state['language']
+def react_documentation_reviewer(state: AgentState):
+   """Reviews code documentation quality for React."""
+   user_code = state['user_code']
 
-
-
-
-
-    prompt = f"""You are a technical documentation expert for React.
+   prompt = f"""You are a technical documentation expert for React.
 
 Review the code documentation quality:
 
@@ -625,8 +597,8 @@ Review the code documentation quality:
 {user_code}
 ```"""
 
-    try:
-        result = llm.invoke(prompt)
-        return {"documentation_report": result.content}
-    except Exception as e:
-        return {"documentation_report": f"Error during documentation review: {str(e)}"}
+   try:
+      result = llm.invoke(prompt)
+      return {"documentation_report": result.content}
+   except Exception as e:
+      return {"documentation_report": f"Error during documentation review: {str(e)}"}

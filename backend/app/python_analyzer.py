@@ -7,35 +7,9 @@ import boto3
 from typing import TypedDict, Optional, List
 import json
 from datetime import datetime
+from extensions import AgentState,llm
 
-load_dotenv(".env")
-
-# Initialize Bedrock client
-bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
-
-
-class AgentState(MessagesState):
-   """Enhanced state to track all analysis results."""
-   code_analysis: Optional[str] = None
-   security_report: Optional[str] = None
-   performance_report: Optional[str] = None
-   best_practices_report: Optional[str] = None
-   complexity_report: Optional[str] = None
-   documentation_report: Optional[str] = None
-   final_documentation: Optional[str] = None
-   user_code: str
-   metadata: Optional[dict] = None
-
-
-# Initialize LLM
-llm = ChatBedrockConverse(
-   model="us.amazon.nova-premier-v1:0",
-   max_tokens=32000,
-   temperature=0.3  # Lower temperature for more consistent analysis
-)
-
-
-def code_analyzer(state: AgentState):
+def python_code_analyzer(state: AgentState):
    """
    Analyzes code for PEP-8 compliance, syntax errors, and code quality.
    """
@@ -107,7 +81,7 @@ Format your response as:
       return {"code_analysis": f"Error during code analysis: {str(e)}"}
 
 
-def security_checker(state: AgentState):
+def python_security_checker(state: AgentState):
    """
    Performs comprehensive security analysis of the code.
    """
@@ -194,7 +168,7 @@ Format your response as:
       return {"security_report": f"Error during security check: {str(e)}"}
 
 
-def performance_evaluator(state: AgentState):
+def python_performance_evaluator(state: AgentState):
    """
    Evaluates code for performance issues and optimization opportunities.
    """
@@ -278,7 +252,7 @@ Format your response as:
       return {"performance_report": f"Error during performance evaluation: {str(e)}"}
 
 
-def best_practices_checker(state: AgentState):
+def python_best_practices_checker(state: AgentState):
    """
    Checks adherence to Python best practices and design patterns.
    """
@@ -361,7 +335,7 @@ Format your response as:
       return {"best_practices_report": f"Error during best practices check: {str(e)}"}
 
 
-def complexity_analyzer(state: AgentState):
+def python_complexity_analyzer(state: AgentState):
    """
    Analyzes code complexity and maintainability.
    """
@@ -432,7 +406,7 @@ Format your response as:
       return {"complexity_report": f"Error during complexity analysis: {str(e)}"}
 
 
-def documentation_reviewer(state: AgentState):
+def python_documentation_reviewer(state: AgentState):
    """
    Reviews code documentation quality.
    """
