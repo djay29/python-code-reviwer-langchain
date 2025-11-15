@@ -1,19 +1,14 @@
 import re
 from datetime import datetime
-from langchain_aws import ChatBedrockConverse
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.graph import StateGraph, END, START
-from langgraph.graph.message import MessagesState
-from dotenv import load_dotenv
-import boto3
-from python_analyzer import *
-from react_analyzer import *
-from typing import Optional
+from langgraph.graph import StateGraph, END
+from app.analyzer_logic.python_analyzer import *
+from app.analyzer_logic.react_analyzer import *
 from datetime import datetime
-from extensions import AgentState
+from app.utils.extensions import AgentState
 from langgraph.types import Send
+import os
 
-def detect_language(code: str) -> str:
+def detect_language(state: AgentState) -> str:
     """
     Automatically detect if code is Python or React (JavaScript/TypeScript).
     """
@@ -41,6 +36,7 @@ def detect_language(code: str) -> str:
         r'\.py[\'"]',
     ]
     
+    code = state["user_code"]
     react_score = sum(1 for pattern in react_patterns if re.search(pattern, code))
     python_score = sum(1 for pattern in python_patterns if re.search(pattern, code))
     
@@ -266,3 +262,35 @@ def create_workflow():
     graph.add_edge("generate_report",END)
 
     return graph.compile()
+
+def get_latest_file_name(user: str) -> str:
+    import os
+    user_dir = os.path.join(os.getcwd(), user)
+    # print(user_dir)
+    files = os.listdir(user_dir)
+    if not files:
+        return None
+    latest_file_count = len(files) 
+    return latest_file_count
+
+def analyze_code(user_code: str,user_id: str,job_id) -> dict:
+    graph = create_workflow()
+
+    initial_state = AgentState(user_code=user_code)
+    result_state = graph.invoke(initial_state)
+    print(result_state)
+    final_documentation = result_state.get("final_documentation")
+
+    user_dir = os.path.join(os.getcwd(), user_id)
+    os.makedirs(user_dir, exist_ok=True)
+
+    file_path = os.path.join(user_dir, f"{job_id}.md")
+
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write(final_documentation)    
+
+    return {
+        "metadata": result_state.get("metadata"),
+        "file_path": file_path,
+        "job_id": job_id
+    }

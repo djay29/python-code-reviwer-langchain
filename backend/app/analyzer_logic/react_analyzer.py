@@ -4,23 +4,20 @@ from langgraph.graph import StateGraph, END, START
 from langgraph.graph.message import MessagesState
 from dotenv import load_dotenv
 import boto3
-from typing import TypedDict, Optional, List, Literal
-import json
-from datetime import datetime
-import re
-from extensions import AgentState
+
+from app.utils.extensions import AgentState
 load_dotenv(".env")
 
 # Initialize Bedrock client
 bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
 
 llm = ChatBedrockConverse(
-    model="us.amazon.nova-premier-v1:0",
-    max_tokens=32000,
-    temperature=0.3,  # Lower temperature for more consistent analysis
-    bedrock_client=bedrock_client,
-    region_name="us-east-1"
-    )
+   model="us.amazon.nova-premier-v1:0",
+   max_tokens=32000,
+   temperature=0.3,  # Lower temperature for more consistent analysis
+   bedrock_client=bedrock_client,
+   region_name="us-east-1"
+   )
 
 
 def react_code_analyzer(state: AgentState):
