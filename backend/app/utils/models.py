@@ -4,7 +4,7 @@ from typing import Optional
 
 class SubmitInput(BaseModel):
     code : str
-    user_id : str
+    username : str
 
 class UserCreate(BaseModel):
     username: str

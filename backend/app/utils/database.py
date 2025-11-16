@@ -29,5 +29,18 @@ def create_db():
         )
     ''')
     
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS job (
+            job_id TEXT NOT NULL PRIMARY KEY,
+            status TEXT NOT NULL,
+            username TEXT NOT NULL,
+            path TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            result TEXT,
+            error TEXT,
+            FOREIGN KEY (username) REFERENCES users(username)
+        )
+    ''')
+    
     db.commit()
     conn.close()
